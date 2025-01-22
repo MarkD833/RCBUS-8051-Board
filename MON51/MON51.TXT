@@ -1,0 +1,290 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                                     MON51
+
+                                       A
+                             Software Debug Monitor
+
+                                  For the 8051
+
+
+
+
+
+
+
+
+
+
+                          Dunfield Development Systems
+                          ----------------------------
+                             High quality tools for
+                              Embedded Development
+                                 at low prices.
+
+                            http://www.dunfield.com
+
+
+                       ?COPY.TXT 1991-2007 Dave Dunfield
+                              **See COPY.TXT**
+
+
+
+                                     MON51
+
+                               TABLE OF CONTENTS
+
+
+                                                                         Page
+
+     1. INTRODUCTION                                                        1
+
+
+     2. USING MON51                                                         2
+
+        2.1 Monitor Commands                                                2
+        2.2 Display Output                                                  5
+        2.3 Interrupts                                                      5
+    MON51                                                            Page: 1
+
+
+    1. INTRODUCTION
+
+          MON51 is an interactive software  debugger  and  machine  language
+       monitor for the Intel 8051 family  of  microprocessors.  It  contains
+       display/alter memory/register facilities,  as well  as  a  full  8051
+       disassembler, breakpoint, and software single step functions.
+
+          MON51  requires  no  hardware  assist,  all  functions   including
+       single-step are implemented in the MON51 firmware. MON51 communicates
+       with  the  user  via  the  internal   serial   port   of   the   8051
+       microcontroller,  although the  RDCHR  and  WRCHR  subroutines  could
+       easily be modified to support communications through an external UART
+       device.
+
+          MON51 requires 80 bytes of external  read/write  memory,  for  its
+       buffers and save areas,  and about 3900 bytes of ROM memory  for  the
+       program.  The MON51 rom must be at the bottom of the 8051 memory map,
+       as it has to control the 8051 interrupt vectors.
+
+          For some operations,  MON51  requires  the  ability  to  WRITE  to
+       PROGRAM memory.  Since this operation is not supported  by  the  8051
+       architecture when using separate CODE and DATA memory,  the  download
+       area of RAM MUST BE ADDRESSED BY THE HARDWARE AS BOTH CODE AND  DATA!
+       This can be accomplished by ANDing  the  -PSEN  and  -RD  signals  to
+       generate the memory select.  If the program memory is not writable as
+       data, the following commands will NOT work correctly:
+
+            Q O     <- Builds and executes a small subroutine in RAM
+            B       <- Appears to work, however failure will occur on
+                       'G'o and/or return to monitor, as breakpoints are
+                       inserted/removed from program memory.
+            L       <- Will download code into data memory, however if that
+                       memory is not also executable, you will not be able
+                       to run the code.
+
+          MON51 preserves the entire contents of registers and internal  RAM
+       when passing control back and forth to the user program.  This allows
+       the user program to  operate  as  if  it  were  running  "standalone"
+       without fear of conflicting with MON51. TIMER1 of the 8051 is used by
+       MON51 both as the baud rate generator for serial communications,  and
+       as a interrupt source when single stepping.  All other 8051  hardware
+       is available to the user program.
+    MON51                                                            Page: 2
+
+
+    2. USING MON51
+
+       2.1 Monitor Commands
+
+             The following commands are implemented in the monitor:
+
+               A <address>
+
+                  Alter INTERNAL memory.  MON51 prompts with  the  specified
+                  address and its current contents.  You may enter  TWO  hex
+                  digits to change its value,  SPACE to advance to the  next
+                  location, BACKSPACE to backup to the previous location, or
+                  CARRIAGE RETURN to terminate the Alter command.
+
+               B <breakpoint#> <address>
+
+                  Set breakpoint at specified address. Breakpoint is removed
+                  if address is 0000.  There can be up to four  breakpoints,
+                  which are referenced by the numbers 0-3.
+
+                  If  SPACE  is  entered  instead  of  a  breakpoint#,   the
+                  currently set breakpoint addresses are displayed.
+
+                  NOTE: The 8051 family of processors does not have a single
+                  byte transfer instruction such  as  is  normally  used  to
+                  implement  breakpoints.   Breakpoints   are   handled   by
+                  inserting  'LCALL'  instructions into your code during the
+                  processing of a 'G'  command and restoring the code in the
+                  breakpoint handler.  Each 'LCALL'  occupies three bytes of
+                  memory, which causes the following restrictions when using
+                  breakpoints:
+
+                     You MUST be careful to place breakpoints  in  locations
+                     where there will NOT be  any  JUMPs  or  CALLs  to  the
+                     addresses containing the second and third bytes of  the
+                     breakpoint.  For example,  if you set a  breakpoint  at
+                     address 1234,  there should NOT  be  a  label  in  your
+                     program occuring at address 1235 or 1236 (Note, a label
+                     at 1234 is OK).
+
+                     You may not set breakpoints that are within three bytes
+                     of  each  other.  The  message  'Breakpoint   conflict'
+                     results if you attempt to do so.
+
+                     Attempt to  'G'o at an address containing a  breakpoint
+                     will also result in the 'Breakpoint conflict'  message.
+                     This will most commonly occur when you wish  to  resume
+                     execution following a breakpoint.  In  this  case,  you
+                     must either remove the breakpoint,  or use  the  'S'tep
+                     command to advance the program counter until it is  NOT
+                     positioned over any part  of  a  breakpoint  (Remember,
+                     breakpoints are three bytes long).
+    MON51                                                            Page: 3
+
+
+               C <register> <value>
+
+                  Changes  8051  registers  values.  Register  is  a  single
+                  character, which may be as follows:
+
+                  A   - Set Accumulator       ( 8 bit value).
+                  B   - Set B register        ( 8 bit value).
+                  D   - Set DPTR              (16 bit value)
+                  S   - Set stack pointer     ( 8 bit value).
+                  P   - Set program counter   (16 bit value).
+                  W   - Set PSW               ( 8 bit value)
+                  0-7 - Set R0-R7 in current register bank (8 bit value)
+
+               D <start>,<end>
+
+                  Displays EXTERNAL DATA memory,  in HEX/ASCII dump  format,
+                  starting at the indicated address.  If a SPACE is  entered
+                  for <end> address, assumes FFFF.
+
+               E <address>
+
+                  Edit's EXTERNAL DATA  memory,  Address  and  contents  are
+                  displayed, Enter TWO hex digits to change value.  Entering
+                  SPACE skips to the next location, BACKSPACE backups to the
+                  previous location.  CARRIAGE RETURN  terminates  the  edit
+                  command.
+
+               F <start>,<end> <value>
+
+                  Fill's external memory from <start> to <end> with the byte
+                  <value>.
+
+               G <address>
+
+                  Begins execution at the indicated address.  If a SPACE  is
+                  entered instead of an address,  begins  execution  at  the
+                  address in the 8051 program counter.
+
+               I <start>,<end>
+
+                  Displays the  contents  of  INTERNAL  memory  between  the
+                  specified addresses.
+
+               L
+
+                  Downloads data from the console  port,  which  may  be  in
+                  either MOTOROLA or INTEL hex format.
+
+                  If you accidently enter this command, you may enter either
+                  'S9'  or ':00'  to signify a null download file and return
+                  to the command prompt.
+    MON51                                                            Page: 4
+
+
+               O <SFR address> <value>
+
+                  Writes the byte  <value>  to the indicated  <SFR  address>
+                  using a direct (SFR) write. Note that for addresses <= 7F,
+                  this will access internal memory.  Addresses from 80 to FF
+                  will  access  the  corresponding  8051  Special   Function
+                  Register.
+
+               Q <SFR address>
+
+                  Displays the content of the indicated <SFR address>  using
+                  a direct (SFR) read.  Note that for addresses <= 7F,  this
+                  will access internal memory.  Addresses from 80 to FF will
+                  access the corresponding 8051 Special Function Register.
+
+               R
+
+                  Displays the current values of the 8051 registers  (A,  B,
+                  DPTR, SP, PC, PSW and R0-R7).
+
+               S
+
+                  Single-Steps one instruction from the current 8051 Program
+                  Counter address. Disassembly of the instruction stepped is
+                  displayed on the console.
+
+               U <start>,<end>
+
+                  Un-assembles  PROGRAM  memory,   starting   at   indicated
+                  address.  If SPACE is entered for <end>  address,  assumes
+                  FFFF. Disassembler output contains address, opcodes bytes,
+                  instruction name, and operands to instruction.
+
+               ?
+
+                  Displays a short help summary of the commands.
+    MON51                                                            Page: 5
+
+
+       2.2 Display Output
+
+             In order to maintain the maximum amount of data on the terminal
+          screen during the debugging session,  MON51 has been  designed  to
+          minimize the number of screen lines in any display.  All  commands
+          which output only one line of data (such as 'B' and 'S'),  will do
+          so on the same line on which the command is issued  (To the  right
+          of the command).
+
+             For commands which output larger amounts of data  (such as 'D',
+          'U'),  pressing the SPACE key during the  display  will  halt  the
+          display on the next line. Each subsequent SPACE entered will cause
+          one more line of data be displayed.  Pressing CARRIAGE RETURN will
+          allow the display to continue at full speed.
+
+             The escape key may be used to cancel command output, and return
+          to the '*' prompt.
+
+       2.3 Interrupts
+
+             MON51 re-vectors all interrupts  (except  for  TIMER1  OVERFLOW
+          which is used internally for single-stepping) to the corresponding
+          locations in the first page of user memory (RAM).
+
+             When debugging any program which uses  the  interrupt  vectors,
+          simply origin it at the  beginning  of  user  RAM,  and  code  the
+          interrupt handlers in exactly the same locations  (relative to the
+          beginning of the  program)  as  you  would  if  the  program  were
+          origined at location zero.
