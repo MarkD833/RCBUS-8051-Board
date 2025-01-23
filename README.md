@@ -24,11 +24,13 @@ The RCBus supports both memory space and IO space. As I was going to have the ma
 
 # The design (so far...)
 The design at v1.1 is shown in the image below. The board is hopefully the size of the RCBus "medium" module with a 40 pin edge connector as detailed in the [RCBus specification](https://smallcomputercentral.com/rcbus/) v1.0.
+
 ![](./images/board.jpg)
 
 # Memory Map
 
 After a hard reset, the lower 12K of program memory ($0000..$2FFF) resides inside the AT89S8253 as FLASH memory and the bulk of the 64K block of RAM is shared between program space and data space.
+
 ![](./images/8051-Memory-Map-1.png)
 
  
@@ -41,6 +43,9 @@ I've ported Dave Dunfields MON51 monitor program over to the 89S8253. Most of th
 * The on-board latch (74LS259) can be written to ($F800..$FBFF)
 * RCBus IO space can be accessed ($FC00..$FFFF)
 
+The LED's on the output port of an [SC129 board](https://smallcomputercentral.com/rcbus/sc100-series/sc129-digital-i-o-rc2014/) can be turned on or off from MON51 by editing data memory at address $FC00 (= RCBus IO space address $00).
+ 
 # Still to do
 * Separating program and data space once the code is loaded
 * Further checks on the RCBus IO space using a few of Steve Cousins boards
+* Enabling an internal reboot so loaded code can execute from address $0000
