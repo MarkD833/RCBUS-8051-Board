@@ -23,11 +23,15 @@ In order to have the maximum amount of code space and data space, I would need a
 The RCBus supports both memory space and IO space. As I was going to have the maximum amout of addressable memory on-board, memory space was not going to be supported. IO space is 256 bytes and is mapped into the data memory map.
 
 # The design (so far...)
-Here's the design at v1.1:
+The design at v1.1 is shown in the image below. The board is hopefully the size of the RCBus "medium" module with a 40 pin edge connector as detailed in the [RCBus specification](https://smallcomputercentral.com/rcbus/) v1.0.
 ![](./images/board.jpg)
 
 # Memory Map
 
+After a hard reset, the lower 12K of program memory ($0000..$2FFF) resides inside the AT89S8253 as FLASH memory and the bulk of the 64K block of RAM is shared between program space and data space.
+![](./images/8051-Memory-Map-1.png)
+
+ 
 # What works
 I've ported Dave Dunfields MON51 monitor program over to the 89S8253. Most of the work involved getting the code to assemble using ASEM-51 v1.3 under Windows 10. The modified MON51 (MON51.a51) and original (MON51.ASM) are in the MON51 folder.
 
