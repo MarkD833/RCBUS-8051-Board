@@ -10,7 +10,7 @@
 ; ----------------------------------------------------------------------------
 ; AT89S8253 Specifics:
 ; When using the XGecu T48 programmer, remember to set:
-;  Lock Byte - No lock bit
+;  Lock Byte   - Set LB1
 ;  Config Byte - All 4 bits set
 ;              + Serial program enable ticked
 ;              + User Row program enable ticked
@@ -22,7 +22,12 @@
 ; Off-board I/O space (via nIORQ) is accessed between $FC00..$FFFF (partially decoded).
 ; Set MONRAM to $F780.
 ; ----------------------------------------------------------------------------
-;
+; NEW COMMANDS:
+;   Z     - Special REBOOT - execute code at $0000 in external program memory
+;         + Disable internal program memory (nEA LOW)
+;         + Separate program memory & data memory
+;         + Reboot via deliberate watchdog timeout
+; ----------------------------------------------------------------------------
 ;  
 ; Comamnds:
 ;	A <aa>		- Alter INTERNAL memory
@@ -108,6 +113,8 @@ ROM		EQU	0000h		; Monitor program storage
 MONRAM	EQU	0F780h		; MON51 reserved RAM (80 bytes)
 USERRAM	EQU	3000h		; USER/download RAM - starts at 12K
 BAUD	EQU	1			; Baudrate divisor for TIMER1 - 38400 baud with x2 clock
+
+LATCH	EQU	0F800h		; 74LS259 octal latch
 
 ; Symbols below this point do not normally have to be changed
 MSSIZE	EQU	32			; Amount of internal memory to save
@@ -817,7 +824,8 @@ ERROR3:
 ;
 ; Help request
 ;
-HELP:	CJNE	R7,#'?',ERROR3	; Help?
+HELP:
+	CJNE	R7,#'?',REBOOT	; Help?
 	MOV	DPTR,#HTEXT		; Point to help text
 HELP1:
 	ACALL	WRLFCR		; New line
@@ -845,6 +853,19 @@ HELP5:
 	SJMP	HELP2		; Handle next
 WGO:
 	LJMP	WRITE
+;
+; Reboot
+;
+REBOOT:
+	CJNE	R7,#'Z',ERROR3	; Help?
+	MOV		DPTR,#LATCH
+	MOV		A,#01
+	MOVX	@DPTR,A		; Set nEA pin low
+	INC		DPTR
+	MOVX	@DPTR,A		; Separate program memory & data memory
+	MOV		WDTCON,#0C9h	; Enable WDT with 1 second timeout
+REBOOT1:
+	SJMP	REBOOT1		; wait for WDT to timeout
 ;
 ; Get PC value... SP = current
 ;
@@ -1720,7 +1741,8 @@ M_CONFL:	DB	0Ah,0Dh,'Breakpoint conflict!',0
 M_HELLO:	DB	0Ah,0Dh,'MON51 v1.1 (c) Dave Dunfield',0Ah,0Dh
 			DB	'Original code at https://dunfield.themindfactory.com',0Ah,0Dh
 			DB	'See COPY.TXT at the above address for more information.',0Ah,0Dh
-			DB	0Ah,0Dh,'User Program space starts at address 0x',0	
+			DB	0Ah,0Dh,'- New Z command added',0Ah,0Dh
+			DB	'- User Program space starts at address 0x',0	
 ;
 ; Table of register names to output
 ;
@@ -1915,6 +1937,7 @@ HTEXT:
 	DB	'X C <aaaa>|LoopRead Code',0
 	DB	'X R <aaaa>|LoopRead XDATA',0
 	DB	'X W <aaaa> <data>|LoopWrite XDATA',0
+	DB	'Z|Reboot - internal Prog Mem disabled',0
 	DB	0
 ;
 ; Initialize the timer 1 for auto-reload at 32xN
