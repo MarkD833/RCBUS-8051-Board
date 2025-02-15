@@ -46,7 +46,10 @@ Currently:
 * Program space and data space can be separated (write $01 to $F801)
 * Internal reboot works - can execute code in external memory starting at address $0000
  
-The LED's on the output port of an [SC129 board](https://smallcomputercentral.com/rcbus/sc100-series/sc129-digital-i-o-rc2014/) can be turned on or off from MON51 by editing data memory at address $FC00 (= RCBus IO space address $00).
+## RCBus boards
+The following boards appear to function correctly with the 8051 micro:
+* SC129 Digital I/O Board
+* SC704 I2C Bus Master Board
  
 # Still to do
 * Further checks on the RCBus IO space using a few of Steve Cousins boards

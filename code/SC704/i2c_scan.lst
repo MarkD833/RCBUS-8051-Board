@@ -1,0 +1,563 @@
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 1
+
+
+
+
+
+       MCS-51 Family Macro Assembler   A S E M - 5 1   V 1.3
+       =====================================================
+
+
+
+	Source File:	i2c_scan.a51
+	Object File:	i2c_scan.hex
+	List File:	i2c_scan.lst
+
+
+
+ Line  I  Addr  Code            Source
+
+    1:				; I2C_SCAN.A51
+    2:				;
+    3:				; Simple program to scan the I2C bus via an SC704 I2C bus master card
+    4:				; and report back any active I2C devices.
+    5:				;
+    6:				; SCL is controlled by bit 0 and SDA is controlled by bit 7.
+    7:				;
+    8:				; Uses register bank 3 for private variables
+    9:				; R0 holds a copy of whats writtien to the I2C port.
+   10:				;
+   11:				; Load register definitions for an ATMEL AT89S8253.
+   12:				$NOMOD51
+   13:				$INCLUDE(89S8253.MCU)
+   14: 1			;   AT89S8253 processor definition file
+   15: 1			;   ===================================
+   16: 1
+   17: 1	N	 80	P0	DATA	080H
+   18: 1	N	 81	SP	DATA	081H
+   19: 1	N	 82	DP0L	DATA	082H
+   20: 1	N	 83	DP0H	DATA	083H
+   21: 1	N	 84	DP1L	DATA	084H
+   22: 1	N	 85	DP1H	DATA	085H
+   23: 1	N	 86	SPDR	DATA	086H
+   24: 1	N	 87	PCON	DATA	087H
+   25: 1	N	 88	TCON	DATA	088H
+   26: 1	N	 89	TMOD	DATA	089H
+   27: 1	N	 8A	TL0	DATA	08AH
+   28: 1	N	 8B	TL1	DATA	08BH
+   29: 1	N	 8C	TH0	DATA	08CH
+   30: 1	N	 8D	TH1	DATA	08DH
+   31: 1	N	 8E	AUXR	DATA	08EH
+   32: 1	N	 8F	CLKREG	DATA	08FH
+   33: 1	N	 90	P1	DATA	090H
+   34: 1	N	 96	EECON	DATA	096H
+   35: 1	N	 98	SCON	DATA	098H
+   36: 1	N	 99	SBUF	DATA	099H
+   37: 1	N	 A0	P2	DATA	0A0H
+   38: 1	N	 A6	WDTRST	DATA	0A6H
+   39: 1	N	 A7	WDTCON	DATA	0A7H
+   40: 1	N	 A8	IE	DATA	0A8H
+   41: 1	N	 A9	SADDR	DATA	0A9H
+   42: 1	N	 AA	SPSR	DATA	0AAH
+   43: 1	N	 B0	P3	DATA	0B0H
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 2
+
+
+
+ Line  I  Addr  Code            Source
+
+   44: 1	N	 B7	IPH	DATA	0B7H
+   45: 1	N	 B8	IP	DATA	0B8H
+   46: 1	N	 B9	SADEN	DATA	0B9H
+   47: 1	N	 C8	T2CON	DATA	0C8H
+   48: 1	N	 C9	T2MOD	DATA	0C9H
+   49: 1	N	 CA	RCAP2L	DATA	0CAH
+   50: 1	N	 CB	RCAP2H	DATA	0CBH
+   51: 1	N	 CC	TL2	DATA	0CCH
+   52: 1	N	 CD	TH2	DATA	0CDH
+   53: 1	N	 D0	PSW	DATA	0D0H
+   54: 1	N	 D5	SPCR	DATA	0D5H
+   55: 1	N	 E0	ACC	DATA	0E0H
+   56: 1	N	 F0	B	DATA	0F0H
+   57: 1
+   58: 1	N	 88	IT0	BIT	088H
+   59: 1	N	 89	IE0	BIT	089H
+   60: 1	N	 8A	IT1	BIT	08AH
+   61: 1	N	 8B	IE1	BIT	08BH
+   62: 1	N	 8C	TR0	BIT	08CH
+   63: 1	N	 8D	TF0	BIT	08DH
+   64: 1	N	 8E	TR1	BIT	08EH
+   65: 1	N	 8F	TF1	BIT	08FH
+   66: 1	N	 90	T2	BIT	090H
+   67: 1	N	 91	T2EX	BIT	091H
+   68: 1	N	 94	SS	BIT	094H
+   69: 1	N	 95	MOSI	BIT	095H
+   70: 1	N	 96	MISO	BIT	096H
+   71: 1	N	 97	SCK	BIT	097H
+   72: 1	N	 98	RI	BIT	098H
+   73: 1	N	 99	TI	BIT	099H
+   74: 1	N	 9A	RB8	BIT	09AH
+   75: 1	N	 9B	TB8	BIT	09BH
+   76: 1	N	 9C	REN	BIT	09CH
+   77: 1	N	 9D	SM2	BIT	09DH
+   78: 1	N	 9E	SM1	BIT	09EH
+   79: 1	N	 9F	SM0	BIT	09FH
+   80: 1	N	 9F	FE	BIT	09FH
+   81: 1	N	 A8	EX0	BIT	0A8H
+   82: 1	N	 A9	ET0	BIT	0A9H
+   83: 1	N	 AA	EX1	BIT	0AAH
+   84: 1	N	 AB	ET1	BIT	0ABH
+   85: 1	N	 AC	ES	BIT	0ACH
+   86: 1	N	 AD	ET2	BIT	0ADH
+   87: 1	N	 AF	EA	BIT	0AFH
+   88: 1	N	 B0	RXD	BIT	0B0H
+   89: 1	N	 B1	TXD	BIT	0B1H
+   90: 1	N	 B2	INT0	BIT	0B2H
+   91: 1	N	 B3	INT1	BIT	0B3H
+   92: 1	N	 B4	T0	BIT	0B4H
+   93: 1	N	 B5	T1	BIT	0B5H
+   94: 1	N	 B6	WR	BIT	0B6H
+   95: 1	N	 B7	RD	BIT	0B7H
+   96: 1	N	 B8	PX0	BIT	0B8H
+   97: 1	N	 B9	PT0	BIT	0B9H
+   98: 1	N	 BA	PX1	BIT	0BAH
+   99: 1	N	 BB	PT1	BIT	0BBH
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 3
+
+
+
+ Line  I  Addr  Code            Source
+
+  100: 1	N	 BC	PS	BIT	0BCH
+  101: 1	N	 BD	PT2	BIT	0BDH
+  102: 1	N	 C8	CPRL2	BIT	0C8H
+  103: 1	N	 C9	CT2	BIT	0C9H
+  104: 1	N	 CA	TR2	BIT	0CAH
+  105: 1	N	 CB	EXEN2	BIT	0CBH
+  106: 1	N	 CC	TCLK	BIT	0CCH
+  107: 1	N	 CD	RCLK	BIT	0CDH
+  108: 1	N	 CE	EXF2	BIT	0CEH
+  109: 1	N	 CF	TF2	BIT	0CFH
+  110: 1	N	 D0	P	BIT	0D0H
+  111: 1	N	 D2	OV	BIT	0D2H
+  112: 1	N	 D3	RS0	BIT	0D3H
+  113: 1	N	 D4	RS1	BIT	0D4H
+  114: 1	N	 D5	F0	BIT	0D5H
+  115: 1	N	 D6	AC	BIT	0D6H
+  116: 1	N	 D7	CY	BIT	0D7H
+  117: 1
+  118: 1	N      0000	RESET	CODE	000H
+  119: 1	N      0003	EXTI0	CODE	003H
+  120: 1	N      000B	TIMER0	CODE	00BH
+  121: 1	N      0013	EXTI1	CODE	013H
+  122: 1	N      001B	TIMER1	CODE	01BH
+  123: 1	N      0023	SINT	CODE	023H
+  124: 1	N      002B	TIMER2	CODE	02BH
+  125:
+  126:		N      007F	SDALO		EQU		07Fh	; AND with this value
+  127:		N      0080	SDAHI		EQU		080h	; OR with this value
+  128:		N      00FE	SCLLO		EQU		0FEh	; AND with this value
+  129:		N      0001	SCLHI		EQU		001h	; OR with this value
+  130:
+  131:		N      FC00	IOBASE		EQU		0FC00h	; IO space base address
+  132:		N      000C	SC704ADDR	EQU		00Ch	; SC704 default address is 12 (0x0C)
+  133:
+  134:		N      FC0C	IOADDR		EQU		IOBASE+SC704ADDR
+  135:
+  136:		N      0008	DELAY		EQU		08h
+  137:
+  138:		N      4000		ORG		4000h
+  139:
+  140:	  4000	90 40 B0		MOV		DPTR,#TITLE
+  141:	  4003	11 81			ACALL	WRSTR
+  142:
+  143:	  4005	75 D0 00		MOV		PSW,#00h		; switch to register bank 0
+  144:	  4008	78 08			MOV		R0,#08h			; start with address 8
+  145:	  400A			LOOP:
+  146:	  400A	11 1E			ACALL	I2CSTART		; START condition
+  147:	  400C	E8			MOV		A,R0			; get the address to check
+  148:	  400D	23			RL		A				; shift 1 bit left
+  149:	  400E	11 38			ACALL	I2CWRITE
+  150:	  4010	40 05			JC		NAK				; no device at that address
+  151:
+  152:	  4012	E8			MOV		A,R0			; get address just scanned
+  153:	  4013	11 9C			ACALL	WRHEX			; display it
+  154:	  4015	11 8B			ACALL	WRCRLF
+  155:	  4017			NAK:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 4
+
+
+
+ Line  I  Addr  Code            Source
+
+  156:	  4017	11 6A			ACALL	I2CEND			; STOP condition
+  157:	  4019	08			INC		R0				; move to next address
+  158:	  401A	B8 80 ED		CJNE	R0,#080h,LOOP
+  159:	  401D	22			RET
+  160:
+  161:
+  162:				;
+  163:				; Send START condition
+  164:				; Assumes SDA and SCL are both HIGH already
+  165:				;
+  166:	  401E			I2CSTART:
+  167:	  401E	75 D0 18		MOV		PSW,#18h	; switch to register bank 3
+  168:	  4021	78 81			MOV		R0,#081h	; set SCL & SDA bits HIGH
+  169:	  4023	75 D0 00		MOV		PSW,#00h	; switch to register bank 0
+  170:
+  171:	  4026	43 96 04		ORL		EECON,#04h	; switch to DPTR 1
+  172:	  4029	90 FC 0C		MOV		DPTR,#IOADDR
+  173:
+  174:	  402C	74 01			MOV		A,#01h		; set SCL HIGH & SDA LOW
+  175:	  402E	F0			MOVX	@DPTR,A		; update the port
+  176:	  402F	00			NOP
+  177:	  4030	00			NOP
+  178:	  4031	74 00			MOV		A,#00h		; set SCL LOW & SDA LOW
+  179:	  4033	F0			MOVX	@DPTR,A		; update the port
+  180:
+  181:	  4034	53 96 FB		ANL		EECON,#0FBh	; switch back to DPTR 0
+  182:	  4037	22			RET
+  183:				;
+  184:				; write a byte - ACC holds the byte to sends
+  185:				; C is set for a NACK and clear for an ACK
+  186:				; State of SCL & SDA held in R0 in register bank 3
+  187:				;
+  188:	  4038			I2CWRITE:
+  189:	  4038	43 96 04		ORL		EECON,#04h	; switch to DPTR 1
+  190:	  403B	90 FC 0C		MOV		DPTR,#IOADDR
+  191:	  403E	75 D0 18		MOV		PSW,#18h	; switch to register bank 3
+  192:
+  193:	  4041	79 08			MOV		R1,#8		; number of bits to send
+  194:	  4043			I2CX1:
+  195:	  4043	33			RLC		A			; carry holds bit to send
+  196:	  4044	C8			XCH		A,R0		; swap A & R0
+  197:	  4045	13			RRC		A			; carry now in MSB (i.e. SDA bit)
+  198:	  4046	F0			MOVX	@DPTR,A		; update the port
+  199:	  4047	00			NOP
+  200:	  4048	44 01			ORL		A,#SCLHI
+  201:	  404A	F0			MOVX	@DPTR,A		; update the port
+  202:	  404B	00			NOP
+  203:	  404C	00			NOP
+  204:	  404D	00			NOP
+  205:	  404E	00			NOP
+  206:	  404F	54 FE			ANL		A,#SCLLO
+  207:	  4051	F0			MOVX	@DPTR,A		; update the port
+  208:	  4052	C8			XCH		A,R0		; swap A & R0
+  209:	  4053	D9 EE			DJNZ	R1,I2CX1
+  210:
+  211:	  4055	75 D0 00		MOV		PSW,#00h	; switch back to register bank 0
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 5
+
+
+
+ Line  I  Addr  Code            Source
+
+  212:										; do this here or we lose the carry flag
+  213:
+  214:					; done 8 bits so check for ACK or NAK
+  215:	  4058	74 80			MOV		A,#080h		; release SDA and set SCL LOW
+  216:	  405A	F0			MOVX	@DPTR,A		; update the port
+  217:	  405B	00			NOP
+  218:
+  219:	  405C	74 81			MOV		A,#081h		; release SDA and set SCL HIGH
+  220:	  405E	F0			MOVX	@DPTR,A		; update the port
+  221:	  405F	00			NOP
+  222:	  4060	00			NOP
+  223:	  4061	E0			MOVX	A,@DPTR		; read the port
+  224:	  4062	33			RLC		A			; carry flag holds ACK/NAK state
+  225:	  4063	74 80			MOV		A,#080h		; SDA HIGH and SCL LOW
+  226:	  4065	F0			MOVX	@DPTR,A		; update the port
+  227:
+  228:	  4066	53 96 FB		ANL		EECON,#0FBh	; switch back to DPTR 0
+  229:	  4069	22			RET
+  230:
+  231:				;
+  232:				; Send STOP condition
+  233:				; SCL will already be low
+  234:				;
+  235:	  406A			I2CEND:
+  236:	  406A	43 96 04		ORL		EECON,#04h	; switch to DPTR 1
+  237:	  406D	90 FC 0C		MOV		DPTR,#IOADDR
+  238:
+  239:	  4070	74 00			MOV		A,#00h		; set SCL LOW & SDA LOW
+  240:	  4072	F0			MOVX	@DPTR,A		; update the port
+  241:	  4073	00			NOP
+  242:	  4074	00			NOP
+  243:	  4075	74 01			MOV		A,#01h		; set SCL HIGH & SDA LOW
+  244:	  4077	F0			MOVX	@DPTR,A		; update the port
+  245:	  4078	00			NOP
+  246:	  4079	00			NOP
+  247:	  407A	74 81			MOV		A,#081h		; set SCL HIGH & SDA HIGH
+  248:	  407C	F0			MOVX	@DPTR,A		; update the port
+  249:
+  250:	  407D	53 96 FB		ANL		EECON,#0FBh	; switch back to DPTR 0
+  251:	  4080	22			RET
+  252:
+  253:				;------------------------------------------------------------------------------
+  254:				; HELPER ROUTINES - MOSTLY SERIAL I/O
+  255:				;------------------------------------------------------------------------------
+  256:				;
+  257:				; Write a null terminated string to the serial port
+  258:				; DPTR holds the address of the first character
+  259:				;
+  260:	  4081			WRSTR:
+  261:	  4081	E4			CLR		A			; Zero offset
+  262:	  4082	93			MOVC	A,@A+DPTR	; Get character (assumes ROM & RAM combined)
+  263:	  4083	A3			INC		DPTR		; Advance to next
+  264:	  4084	60 04			JZ		WRSTRx		; End of string
+  265:	  4086	11 94			ACALL	WRCHR		; Write it out
+  266:	  4088	80 F7			SJMP	WRSTR		; And go back for the next character
+  267:	  408A			WRSTRx:
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 6
+
+
+
+ Line  I  Addr  Code            Source
+
+  268:	  408A	22			RET
+  269:				;
+  270:				; Write a new line (CR & LF) to the serial port
+  271:				;
+  272:	  408B			WRCRLF:
+  273:	  408B	74 0A			MOV		A,#10
+  274:	  408D	11 94			ACALL	WRCHR		; Write it out
+  275:	  408F	74 0D			MOV		A,#13
+  276:	  4091	11 94			ACALL	WRCHR		; Write it out
+  277:	  4093	22			RET
+  278:				;
+  279:				; Write a character in A to the serial port
+  280:				;
+  281:	  4094			WRCHR:
+  282:	  4094	30 99 FD		JNB		SCON.1,$	; Wait for the TI bit to be set
+  283:	  4097	C2 99			CLR		SCON.1		; Clear TI bit
+  284:	  4099	F5 99			MOV		SBUF,A		; Write out char
+  285:	  409B	22			RET
+  286:				;
+  287:				; Write byte in A to the serial port in HEX
+  288:				;
+  289:	  409C			WRHEX:
+  290:	  409C	C0 E0			PUSH	ACC			; Save value
+  291:	  409E	C4			SWAP	A			; Get high nibble
+  292:	  409F	11 A3			ACALL	WRHEX1		; Output it
+  293:	  40A1	D0 E0			POP	ACC				; Get low nibble
+  294:	  40A3			WRHEX1:
+  295:	  40A3	54 0F			ANL	A,#00001111b	; Use low digit only
+  296:	  40A5	24 30			ADD	A,#'0'			; Convert to ASCII
+  297:	  40A7	B4 3A 00		CJNE	A,#'0'+10,$+3	; Non-Destructive compare
+  298:	  40AA	40 E8			JC	WRCHR			; A = 0-9
+  299:	  40AC	24 07			ADD	A,#7			; Convert HEX digits
+  300:	  40AE	80 E4			SJMP	WRCHR		; And write the character
+  301:
+  302:	  40B0			TITLE:
+  303:	  40B0	52 43 42 75		DB		'RCBus 8051 I2C Scanner - SC704 @ Address 0x0C',10,13
+	  40B4	73 20 38 30
+	  40B8	35 31 20 49
+	  40BC	32 43 20 53
+	  40C0	63 61 6E 6E
+	  40C4	65 72 20 2D
+	  40C8	20 53 43 37
+	  40CC	30 34 20 40
+	  40D0	20 41 64 64
+	  40D4	72 65 73 73
+	  40D8	20 30 78 30
+	  40DC	43 0A 0D
+  304:	  40DF	53 63 61 6E		DB		'Scanning for devices ...',10,13,0
+	  40E3	6E 69 6E 67
+	  40E7	20 66 6F 72
+	  40EB	20 64 65 76
+	  40EF	69 63 65 73
+	  40F3	20 2E 2E 2E
+	  40F7	0A 0D 00
+  305:	  40FA			ACKMSG:
+  306:	  40FA	41 43 4B 20		DB		'ACK received',10,13,0
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 7
+
+
+
+ Line  I  Addr  Code            Source
+
+	  40FE	72 65 63 65
+	  4102	69 76 65 64
+	  4106	0A 0D 00
+  307:	  4109			NAKMSG:
+  308:	  4109	4E 41 4B 20		DB		'NAK received',10,13,0
+	  410D	72 65 63 65
+	  4111	69 76 65 64
+	  4115	0A 0D 00
+  309:					END
+
+
+
+
+
+                     register banks used:  ---
+
+                     no errors
+
+
+
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 8
+
+
+
+
+
+	       L I S T   O F   S Y M B O L S
+	       =============================
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+??ASEM_51			  NUMBER    8051
+??VERSION			  NUMBER    0130
+AC				  BIT	      D6	 115
+ACC				  DATA	      E0	  55
+ACKMSG				  CODE	    40FA	 305
+AUXR				  DATA	      8E	  31
+B				  DATA	      F0	  56
+CLKREG				  DATA	      8F	  32
+CPRL2				  BIT	      C8	 102
+CT2				  BIT	      C9	 103
+CY				  BIT	      D7	 116
+DELAY				  NUMBER    0008	 136
+DP0H				  DATA	      83	  20
+DP0L				  DATA	      82	  19
+DP1H				  DATA	      85	  22
+DP1L				  DATA	      84	  21
+EA				  BIT	      AF	  87
+EECON				  DATA	      96	  34
+ES				  BIT	      AC	  85
+ET0				  BIT	      A9	  82
+ET1				  BIT	      AB	  84
+ET2				  BIT	      AD	  86
+EX0				  BIT	      A8	  81
+EX1				  BIT	      AA	  83
+EXEN2				  BIT	      CB	 105
+EXF2				  BIT	      CE	 108
+EXTI0				  CODE	    0003	 119
+EXTI1				  CODE	    0013	 121
+F0				  BIT	      D5	 114
+FE				  BIT	      9F	  80
+I2CEND				  CODE	    406A	 235
+I2CSTART			  CODE	    401E	 166
+I2CWRITE			  CODE	    4038	 188
+I2CX1				  CODE	    4043	 194
+IE				  DATA	      A8	  40
+IE0				  BIT	      89	  59
+IE1				  BIT	      8B	  61
+INT0				  BIT	      B2	  90
+INT1				  BIT	      B3	  91
+IOADDR				  NUMBER    FC0C	 134
+IOBASE				  NUMBER    FC00	 131
+IP				  DATA	      B8	  45
+IPH				  DATA	      B7	  44
+IT0				  BIT	      88	  58
+IT1				  BIT	      8A	  60
+LOOP				  CODE	    400A	 145
+MISO				  BIT	      96	  70
+MOSI				  BIT	      95	  69
+NAK				  CODE	    4017	 155
+NAKMSG				  CODE	    4109	 307
+
+ASEM-51 V1.3                                         Copyright (c) 2002 by W.W. Heinz                                         PAGE 9
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+OV				  BIT	      D2	 111
+P				  BIT	      D0	 110
+P0				  DATA	      80	  17
+P1				  DATA	      90	  33
+P2				  DATA	      A0	  37
+P3				  DATA	      B0	  43
+PCON				  DATA	      87	  24
+PS				  BIT	      BC	 100
+PSW				  DATA	      D0	  53
+PT0				  BIT	      B9	  97
+PT1				  BIT	      BB	  99
+PT2				  BIT	      BD	 101
+PX0				  BIT	      B8	  96
+PX1				  BIT	      BA	  98
+RB8				  BIT	      9A	  74
+RCAP2H				  DATA	      CB	  50
+RCAP2L				  DATA	      CA	  49
+RCLK				  BIT	      CD	 107
+RD				  BIT	      B7	  95
+REN				  BIT	      9C	  76
+RESET				  CODE	    0000	 118
+RI				  BIT	      98	  72
+RS0				  BIT	      D3	 112
+RS1				  BIT	      D4	 113
+RXD				  BIT	      B0	  88
+SADDR				  DATA	      A9	  41
+SADEN				  DATA	      B9	  46
+SBUF				  DATA	      99	  36
+SC704ADDR			  NUMBER    000C	 132
+SCK				  BIT	      97	  71
+SCLHI				  NUMBER    0001	 129
+SCLLO				  NUMBER    00FE	 128
+SCON				  DATA	      98	  35
+SDAHI				  NUMBER    0080	 127
+SDALO				  NUMBER    007F	 126
+SINT				  CODE	    0023	 123
+SM0				  BIT	      9F	  79
+SM1				  BIT	      9E	  78
+SM2				  BIT	      9D	  77
+SP				  DATA	      81	  18
+SPCR				  DATA	      D5	  54
+SPDR				  DATA	      86	  23
+SPSR				  DATA	      AA	  42
+SS				  BIT	      94	  68
+T0				  BIT	      B4	  92
+T1				  BIT	      B5	  93
+T2				  BIT	      90	  66
+T2CON				  DATA	      C8	  47
+T2EX				  BIT	      91	  67
+T2MOD				  DATA	      C9	  48
+TB8				  BIT	      9B	  75
+TCLK				  BIT	      CC	 106
+TCON				  DATA	      88	  25
+TF0				  BIT	      8D	  63
+TF1				  BIT	      8F	  65
+TF2				  BIT	      CF	 109
+
+ASEM-51 V1.3                                        Copyright (c) 2002 by W.W. Heinz                                         PAGE 10
+
+
+
+SYMBOL				  TYPE     VALUE	LINE
+------------------------------------------------------------
+TH0				  DATA	      8C	  29
+TH1				  DATA	      8D	  30
+TH2				  DATA	      CD	  52
+TI				  BIT	      99	  73
+TIMER0				  CODE	    000B	 120
+TIMER1				  CODE	    001B	 122
+TIMER2				  CODE	    002B	 124
+TITLE				  CODE	    40B0	 302
+TL0				  DATA	      8A	  27
+TL1				  DATA	      8B	  28
+TL2				  DATA	      CC	  51
+TMOD				  DATA	      89	  26
+TR0				  BIT	      8C	  62
+TR1				  BIT	      8E	  64
+TR2				  BIT	      CA	 104
+TXD				  BIT	      B1	  89
+WDTCON				  DATA	      A7	  39
+WDTRST				  DATA	      A6	  38
+WR				  BIT	      B6	  94
+WRCHR				  CODE	    4094	 281
+WRCRLF				  CODE	    408B	 272
+WRHEX				  CODE	    409C	 289
+WRHEX1				  CODE	    40A3	 294
+WRSTR				  CODE	    4081	 260
+WRSTRX				  CODE	    408A	 267
