@@ -22,8 +22,8 @@ The [SC129](https://smallcomputercentral.com/rcbus/sc100-series/sc129-digital-i-
 
 | File | Description |
 | :---- | :---- |
-| count.a51 | Simple program to count in binary on the LEDs of an SC129 board. |
-| echo.a51 | Simple program to read an SC129 input port and write to its output port. |
+| count.a51 | Counts in binary on the LEDs of an SC129 board. |
+| echo.a51 | Reads an SC129 input port and writes to its output port. |
 
 ## SC704 I2C Bus Master board
 The [SC704](https://smallcomputercentral.com/rcbus/sc700-series/sc704-rcbus-i2c-bus-master/) implements a simple bit banged I2C bus master. As part of the testing, an [SC406](https://smallcomputercentral.com/i2c-bus-modules/sc406-i2c-temperature-sensor-module/) I2C temperature sensor module was used.
@@ -31,9 +31,12 @@ The [SC704](https://smallcomputercentral.com/rcbus/sc700-series/sc704-rcbus-i2c-
 | File | Description |
 | :---- | :---- |
 | i2c_scan.a51 | Simple I2C bus scanner to detect I2C devices and report their addresses. |
-| sc406.a51 | Simple program to read the temperature of an SC406 temperature sensor. |
+| sc406.a51 | Reads the temperature of an SC406 temperature sensor. |
 
 ## SC705 Serial ACIA board
-The [SC705](https://smallcomputercentral.com/rcbus/sc700-series/sc705-rcbus-serial-acia/) is a single channel UART with a fixed baud rate (dependant on the external clock applied).
+The [SC705](https://smallcomputercentral.com/rcbus/sc700-series/sc705-rcbus-serial-acia/) is a single channel UART (MC68B50) with a fixed baud rate (dependant on the external clock applied).
 
-Currently under test.
+| File | Description |
+| :---- | :---- |
+| hello.a51 | Outputs "Hello World!" to the port. |
+| echo.a51 | Echoes back any characters received. |

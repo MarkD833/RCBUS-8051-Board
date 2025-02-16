@@ -49,7 +49,8 @@ Currently:
 ## RCBus boards
 The following boards appear to function correctly with the 8051 micro:
 * SC129 Digital I/O Board
-* SC704 I2C Bus Master Board
+* SC704 I2C Bus Master Board (inc SC406 temperature module)
+* SC705 Serial ACIA Board
  
 # Still to do
 * Further checks on the RCBus IO space using a few of Steve Cousins boards
